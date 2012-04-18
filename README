@@ -1,0 +1,18 @@
+RenRen Crawler
+
+BACKGROUND:
+    BBS, SNS and others is a good place where you can do many 
+    things, but first of all, you must login, so this program
+    will teach you how to do that in renren.com.
+
+PURPOSE:
+    crawling information such as friends list from 
+    renren.com(人人网), a very famous sns site in china.
+
+USAGE:
+    python renren_crawler.py user password
+
+AUTHOR:
+    jizhouli (justinli.ljt@gmail.com)
+
+
