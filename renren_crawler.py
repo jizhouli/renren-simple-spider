@@ -35,8 +35,8 @@ class RenRenCrawler(object):
             'Connection': 'keep-alive',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'Referer': 'http://www.renren.com/SysHome.do',
-            'Content-Length': '133',
-            'Cookie': '_r01_=1; depovince=BJ; jebecookies=f6bce625-6dbc-4f9a-9a29-58a629eac5da|||||; idc=tel; ick=35776a1f-d2e0-4f25-805a-59533875f319; loginfrom=null; feedType=37491_hot; JSESSIONID=abcgo0AVJR7s7fCIqDdBt; anonymid=h15tajwhbuns1e',
+            #'Content-Length': '133', # USELESS
+            #'Cookie': '_r01_=1; depovince=BJ; jebecookies=f6bce625-6dbc-4f9a-9a29-58a629eac5da|||||; idc=tel; ick=35776a1f-d2e0-4f25-805a-59533875f319; loginfrom=null; feedType=37491_hot; JSESSIONID=abcgo0AVJR7s7fCIqDdBt; anonymid=h15tajwhbuns1e', # USELESS
             'Pragma': 'no-cache',
             'Cache-Control': 'no-cache',
         }
@@ -65,6 +65,7 @@ class RenRenCrawler(object):
 
     def get_friends_list(self):
         friends = []
+        friends_id = []
 
         req=urllib2.urlopen('http://friend.renren.com/myfriendlistx.do#item_0')
         ret_html =req.read()
@@ -75,8 +76,8 @@ class RenRenCrawler(object):
         if m:
             friends_json = m.group(1)
         else:
-            logger.info('can`t fine friend list')
-            return False, friends
+            logger.info('can`t find friend list')
+            return False, friends, friends_id
 
         # head
         # <type 'unicode'>
@@ -94,8 +95,9 @@ class RenRenCrawler(object):
         # <type 'int'>
 
         friends = json.loads(friends_json)
-        logger.info('total:\t' + str(len(friends)))
+        logger.info('friends total:\t' + str(len(friends)))
         for f in friends:
+            friends_id.append(f['id'])
             logger.info('name:    \t' + f['name'])
             logger.info('id:      \t' + str(f['id']))
             logger.info('mo:      \t' + str(f['mo']))
@@ -106,9 +108,44 @@ class RenRenCrawler(object):
                 logger.info('         \t' + g)
             logger.info('')
 
-        return True, friends
+        logger.info('friends id: ' + str(friends_id))
+        return True, friends, friends_id
 
-    pass
+    def get_maybe_friends_list(self):
+        maybe_friends = []
+        maybe_friends_id = []
+
+        req=urllib2.urlopen('http://friend.renren.com/myrelationperson.do')
+        ret_html =req.read()
+        logger.info('get maybe friends list')
+
+        maybe_friends_json = ''
+        m = re.search(r'var maybe_groups = (.*);', ret_html)
+        if m:
+            maybe_friends_json = m.group(1)
+        else:
+            logger.info('can`t find maybe friend list')
+            return False, maybe_friends, maybe_friends_id
+
+        maybe_friends = json.loads(maybe_friends_json)
+        logger.info('maybe friends total:\t' + str(len(maybe_friends)))
+        for fs in maybe_friends:
+            logger.info('name:      \t' + fs['name'])
+            logger.info('type:      \t' + fs['type'])
+            logger.info('morelink:  \t' + fs['morelink'])
+            logger.info('count:     \t' + str(fs['count']))
+            for f in fs['people']:
+                maybe_friends_id.append(f['id'])
+                indent = ' '*4
+                logger.info(indent + 'name:     \t' + f['name'])
+                logger.info(indent + 'id:       \t' + str(f['id']))
+                logger.info(indent + 'gender:   \t' + f['gender'])
+                logger.info(indent + 'tinyurl:  \t' + f['tinyurl'])
+            logger.info('')
+
+        logger.info('maybe friends id: ' + str(maybe_friends_id))
+
+        return True, maybe_friends, maybe_friends_id
 
 def main():
 
@@ -132,8 +169,11 @@ def main():
     # 登陆人人
     renren.login(user, password)
 
-    # 获取好友列表
+    ## 获取好友列表
     renren.get_friends_list()
+
+    # 获取推荐好友列表
+    renren.get_maybe_friends_list()
 
     logger.info('ren ren crawler, stop.')
     pass
